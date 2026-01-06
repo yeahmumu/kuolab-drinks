@@ -180,7 +180,7 @@ const App = () => {
               <CupSoda size={24} strokeWidth={2.5} />
             </div>
             <div>
-              <h1 className="text-xl font-black tracking-tight text-slate-800">KuoLab 飲料團購</h1>
+              <h1 className="text-xl font-black tracking-tight text-slate-800">KuoLab 飲料紀錄簿</h1>
               <p className="text-[10px] text-orange-500 font-bold uppercase tracking-widest">Daily Drink Tracker</p>
             </div>
           </div>
