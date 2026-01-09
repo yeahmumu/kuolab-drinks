@@ -143,6 +143,7 @@ const App = () => {
   const stats = useMemo(() => {
     const memberRanking = {};
     const storeCounts = {};
+    const totalOrdersCount = orders.length;
 
     orders.forEach(o => {
       // 統計店家次數
@@ -161,7 +162,14 @@ const App = () => {
     });
 
     const ranking = Object.entries(memberRanking)
-      .map(([name, data]) => ({ name, ...data }))
+      .map(([name, data]) => ({ 
+        name, 
+        ...data,
+        // 計算參與率並四捨五入
+        participationRate: totalOrdersCount > 0 
+          ? Math.round((data.count / totalOrdersCount) * 100) 
+          : 0
+      }))
       .sort((a, b) => b.cups - a.cups);
 
     const topStores = Object.entries(storeCounts)
@@ -169,7 +177,7 @@ const App = () => {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
 
-    return { ranking, topStores };
+    return { ranking, topStores, totalOrdersCount };
   }, [orders, members]);
 
   const handleAddOrder = async () => {
@@ -517,12 +525,8 @@ const App = () => {
                       <>
                         <span className="text-sm font-bold">{d.day}</span>
                         {d.hasOrder && (
-                          <Beer 
-                            size={16} 
-                            className={`absolute bottom-0.5 ${selectedCalendarDate === d.date ? 'text-white' : 'text-orange-500'}`}
-                          />)}
-                      </>
-                    )}
+                          <Beer className={`absolute bottom-0.5 w-[35%] h-[35%] sm:w-5 sm:h-5 max-w-[22px] max-h-[22px] ${selectedCalendarDate === d.date ? 'text-white' : 'text-orange-500'}`} /> 
+                        )} </> )}
                   </button>
                 ))}
               </div>
@@ -628,47 +632,40 @@ const App = () => {
             {/* 成員排行清單 */}
             <div className="bg-white rounded-3xl shadow-sm border-none overflow-hidden">
               <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-900 text-white">
-                <h2 className="text-xl font-black flex items-center gap-2">
-                  <Trophy className="text-amber-400" size={24} /> 飲料大王排行榜
-                </h2>
+                <h2 className="text-xl font-black flex items-center gap-2"><Trophy className="text-amber-400" size={24} /> 飲料大王排行榜</h2>
                 <TrendingUp size={24} className="text-orange-400" />
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
-                    <tr className="bg-slate-50 text-[10px] uppercase font-black text-slate-400">
+                    <tr className="bg-slate-50 text-[12px] uppercase font-black text-slate-400">
                       <th className="px-6 py-4">排名</th>
                       <th className="px-6 py-4">成員</th>
                       <th className="px-6 py-4">總杯數</th>
-                      <th className="px-6 py-4">參加次數</th>
+                      <th className="px-6 py-4">參與率</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {stats.ranking.length > 0 ? (
-                      stats.ranking.map((r, idx) => (
-                        <tr key={r.name} className="hover:bg-slate-50 transition-colors">
-                          <td className="px-6 py-5">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-black ${
-                              idx === 0 ? 'bg-amber-400 text-white shadow-lg' : 
-                              idx === 1 ? 'bg-slate-300 text-white' :
-                              idx === 2 ? 'bg-orange-300 text-white' : 'bg-slate-100 text-slate-400'
-                            }`}>
-                              {idx + 1}
+                    {stats.ranking.length > 0 ? stats.ranking.map((r, idx) => (
+                      <tr key={r.name} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-5">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-black ${idx === 0 ? 'bg-amber-400 text-white shadow-lg' : idx === 1 ? 'bg-slate-300 text-white' : idx === 2 ? 'bg-orange-300 text-white' : 'bg-slate-100 text-slate-400'}`}>{idx + 1}</div>
+                        </td>
+                        <td className="px-6 py-5 font-black text-slate-700">{r.name}</td>
+                        <td className="px-6 py-5">
+                          <span className="text-orange-500 font-black text-lg">{r.cups}</span><span className="text-xs text-slate-300 ml-1 font-bold">杯</span>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-700 font-black text-lg">{r.participationRate}%</span>
+                            <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden hidden sm:block">
+                              <div className="bg-orange-400 h-full" style={{ width: `${r.participationRate}%` }}></div>
                             </div>
-                          </td>
-                          <td className="px-6 py-5 font-black text-slate-700">{r.name}</td>
-                          <td className="px-6 py-5">
-                            <span className="text-orange-500 font-black text-lg">{r.cups}</span>
-                            <span className="text-xs text-slate-300 ml-1 font-bold">杯</span>
-                          </td>
-                          <td className="px-6 py-5 text-slate-400 text-sm font-bold">{r.count} 次</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="4" className="px-6 py-12 text-center text-slate-400 italic">尚未有飲用紀錄</td>
+                          </div>
+                          <p className="text-[12px] text-slate-300 font-bold uppercase tracking-tighter">{r.count} / {stats.totalOrdersCount} 次</p>
+                        </td>
                       </tr>
-                    )}
+                    )) : <tr><td colSpan="4" className="px-6 py-12 text-center text-slate-400 italic">尚未有飲用紀錄</td></tr>}
                   </tbody>
                 </table>
               </div>
